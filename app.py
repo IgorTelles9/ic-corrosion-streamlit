@@ -7,6 +7,10 @@ st.title("Image Database Management")
 # Initialize MongoDB connection
 image_db = Image()
 
+# At the top of your form, before the form block
+if "image_count" not in st.session_state:
+    st.session_state["image_count"] = 1
+
 # Create form
 with st.form("image_form"):
     
@@ -21,8 +25,12 @@ with st.form("image_form"):
     material = st.text_input("Material")
     
     # Multiple Images
-    image_count = st.number_input("Number of images to create", min_value=1, value=1, step=1)
-
+    image_count = st.number_input(
+        "Number of images to create",
+        min_value=1,
+        value=st.session_state["image_count"],
+        step=1
+    )
 
     # Augmentation
     is_augmented = st.checkbox("Is Augmented", value=False)
@@ -45,6 +53,8 @@ with st.form("image_form"):
     submitted = st.form_submit_button("Submit")
     
     if submitted:
+        st.session_state["image_count"] = image_count 
+        
         # Prepare image data
         image_data = {
             "path": full_path,

@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 from pymongo.errors import DuplicateKeyError
-
+from utils import remove_none
 load_dotenv()
 
 class Image:
@@ -24,6 +24,7 @@ class Image:
     def insert_image(self, image_data: dict):
         """Insert a single image record into MongoDB"""
         image_data["created_at"] = datetime.now()
+        image_data = remove_none(image_data)
         try:
             return self.collection.insert_one(image_data)
         except DuplicateKeyError:
@@ -33,12 +34,15 @@ class Image:
         """Insert multiple images with the same characteristics but different paths"""
         extension = os.path.splitext(base_path)[1]
         results = []
-        
+        skipped_paths = []
         for i in range(count):
             image_data = base_data.copy()
             image_data["path"] = f"{os.path.splitext(base_path)[0]}_{i}{extension}"
             image_data["created_at"] = datetime.now()
-            result = self.collection.insert_one(image_data)
-            results.append(result.inserted_id)
-            
-        return results 
+            image_data = remove_none(image_data)
+            try:
+                result = self.collection.insert_one(image_data)
+                results.append(result.inserted_id)
+            except DuplicateKeyError:
+                results.append(None)
+        return results
